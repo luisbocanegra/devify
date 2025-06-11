@@ -2,24 +2,29 @@
 #RUN+="/usr/bin/devify \"$env{HID_NAME}\" \"$env{ACTION}\"", GOTO="end_lookup"
 
 # Input device
-SUBSYSTEM=="input", ACTION=="add|remove", ENV{DEVLINKS}!="" \
-ENV{DEVIFY_TYPE}="input_device", ENV{DEVIFY_DESC}="Input device", \
+SUBSYSTEM=="hid*", ENV{HID_NAME}=="", ACTION=="add|remove", \
+ENV{DEVIFY_TYPE}="input_device" , ENV{DEVIFY_DESC}="Input device", \
 RUN+="/usr/bin/devify" GOTO="end_lookup"
 
-# Removable drive
+# Storage device
 SUBSYSTEM=="block", ENV{DEVNAME}=="/dev/sd?", ACTION=="add|remove", \
-ENV{DEVIFY_TYPE}="removable_drive", ENV{DEVIFY_DESC}="Removable drive", \
+ENV{DEVIFY_TYPE}="removable_drive", ENV{DEVIFY_DESC}="Storage Device", \
 RUN+="/usr/bin/devify" GOTO="end_lookup"
 
-# Android device
-SUBSYSTEM=="usb", ENV{ID_VENDOR_FROM_DATABASE}=="Google Inc.", \
-ENV{ID_MODEL_FROM_DATABASE}=="Nexus/Pixel Device*", ACTION=="add|remove" \
-ENV{DEVIFY_TYPE}="android_device" , ENV{DEVIFY_DESC}="Android device", \
+# Android device, tested with xiaomi and motorola
+SUBSYSTEM=="usb", ENV{ID_VENDOR_FROM_DATABASE}=="Google Inc.|Motorola*", \
+ENV{ID_MODEL_FROM_DATABASE}=="Nexus/Pixel Device*|*Moto*", ACTION=="add|remove" \
+ENV{DEVIFY_TYPE}="android_device" , ENV{DEVIFY_DESC}="Android Device", \
 RUN+="/usr/bin/devify" GOTO="end_lookup"
+
+# USB devices
+# SUBSYSTEM=="usb", ENV{HID_NAME}=="", DRIVER!="*storage*|*audio*", ACTION=="add|remove", \
+# ENV{DEVIFY_TYPE}="usb_device" , ENV{DEVIFY_DESC}="USB device", \
+# RUN+="/usr/bin/devify" GOTO="end_lookup"
 
 # USB serial device, tested with Arduino and PIC K150 Programmer
 SUBSYSTEM=="tty", ENV{DEVLINKS}=="/dev/serial*", ACTION=="add|remove", \
-ENV{DEVIFY_TYPE}="serial_device", ENV{DEVIFY_DESC}="Serial device", \
+ENV{DEVIFY_TYPE}="serial_device", ENV{DEVIFY_DESC}="Serial Device", \
 RUN+="/usr/bin/devify" GOTO="end_lookup"
 
 # Power adapter
@@ -27,14 +32,34 @@ SUBSYSTEM=="power_supply", ENV{POWER_SUPPLY_ONLINE}=="?", ENV{POWER_SUPPLY_TYPE}
 ENV{DEVIFY_TYPE}="power_adapter", ENV{DEVIFY_DESC}="Power Adapter", \
 RUN+="/usr/bin/devify" GOTO="end_lookup"
 
-# # Sound cards
-SUBSYSTEM=="sound", ENV{SOUND_INITIALIZED}=="1", ACTION=="change|remove", \
-ENV{DEVIFY_TYPE}="sound_card", ENV{DEVIFY_DESC}="Audio device", \
+# Sound cards
+# USB
+SUBSYSTEM=="sound", ENV{ID_TYPE}=="audio", ACTION=="add|remove", \
+ENV{DEVIFY_TYPE}="sound_card", ENV{DEVIFY_DESC}="Audio Device", \
+RUN+="/usr/bin/devify" GOTO="end_lookup"
+# PCI
+SUBSYSTEM=="sound|pci", ENV{ID_PCI_SUBCLASS_FROM_DATABASE}=="Audio device", ACTION=="add|remove", \
+ENV{DEVIFY_TYPE}="sound_card", ENV{DEVIFY_DESC}="Audio Device", \
 RUN+="/usr/bin/devify" GOTO="end_lookup"
 
 # Network adapters / usb thethering
-ACTION=="add|remove", SUBSYSTEM=="net", \
-ENV{DEVIFY_TYPE}="network_adapter", ENV{DEVIFY_DESC}="Network adapter", \
+SUBSYSTEM=="net", ACTION=="add|remove", \
+ENV{DEVIFY_TYPE}="network_adapter", ENV{DEVIFY_DESC}="Network Adapter", \
+RUN+="/usr/bin/devify" GOTO="end_lookup"
+
+# Video devices, tested with laptop webcam
+SUBSYSTEM=="video4linux", ACTION=="add|remove", \
+ENV{DEVIFY_TYPE}="video_device", ENV{DEVIFY_DESC}="Video Device", \
+RUN+="/usr/bin/devify" GOTO="end_lookup"
+
+# Bluetooth adapters, tested with laptop internal bluetooth
+SUBSYSTEM=="bluetooth", ACTION=="add|remove", ENV{DEVTYPE}=="", \
+ENV{DEVIFY_TYPE}="bluetooth_adapter", ENV{DEVIFY_DESC}="Bluetooth Adapter", \
+RUN+="/usr/bin/devify" GOTO="end_lookup"
+
+# Bluetooth device
+SUBSYSTEM=="input", ENV{ID_BUS}=="bluetooth", ENV{PHYS}!="", ACTION=="add|remove", \
+ENV{DEVIFY_TYPE}="bluetooth_device", ENV{DEVIFY_DESC}="Bluetooth Device", \
 RUN+="/usr/bin/devify" GOTO="end_lookup"
 
 # Try to avoid matching more than one rule per udev event
